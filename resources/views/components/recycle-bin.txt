@@ -1,0 +1,131 @@
+card-normal
+
+    <div class="p-4 bg-green/5 rounded-xl flex flex-col text-center">
+        <div class="self-start text-sm">Laracast</div>
+
+        <div class="py-8">
+            <h3>Video Producer</h3>
+            <p>Full Time - From $60,000</p>
+        </div>
+
+        <div class="flex justify-between items-center mt-auto">
+            <div>                        
+                <a href="#" class="bg-black/10 hover:bg-black/25 px-2 py-1 rounded-xl text-xs transition-colors duration-300">Tag</a>
+                <a href="#" class="bg-black/10 hover:bg-black/25 px-2 py-1 rounded-xl text-xs transition-colors duration-300">Tag</a>
+                <a href="#" class="bg-black/10 hover:bg-black/25 px-2 py-1 rounded-xl text-xs transition-colors duration-300">Tag</a>
+            </div>
+
+            <img src="https://placehold.co/42" alt="" class="rounded-xl">
+        </div>
+    </div>
+
+
+
+card-wide
+
+    <div class="p-4 bg-green/5 rounded-xl flex gap-x-6">
+        <div>
+            <img src="https://placehold.co/90" alt="" class="rounded-xl">
+        </div>
+
+        <div class="flex-1 flex flex-col">
+            <div class="self-start text-sm text-gray-600">Laracast</div>
+
+            <h3 class="font-bold text-xl mt-3">Video Producer</h3>
+            <p class="text-sm text-gray-600 mt-auto">Full Time - From $60,000</p>
+        </div>
+
+        <div>        
+            <a href="#" class="bg-black/10 hover:bg-black/25 px-3 py-1 rounded-xl text-2xs transition-colors duration-300">Tag</a>
+            <a href="#" class="bg-black/10 hover:bg-black/25 px-3 py-1 rounded-xl text-2xs transition-colors duration-300">Tag</a>
+            <a href="#" class="bg-black/10 hover:bg-black/25 px-3 py-1 rounded-xl text-2xs transition-colors duration-300">Tag</a>
+        </div>
+    </div
+
+
+report-form
+
+@if ($type === 'date')
+    <div class="sm:col-span-3">
+      <label  for="{{ $name }}" 
+              class="inline-flex items-center gap-x-2 font-bold text-lg text-gray-900">
+            <span class="w-2 h-2 bg-green inline-block"></span>
+            {{ $slot }}
+      </label>
+      <div class="mt-2">
+        <div  onclick="this.querySelector('input').showPicker()"
+              class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 w-full cursor-pointer">
+          <input id="{{ $name }}" type="{{ $type }}" name="{{ $name }}" class="block min-w-0 grow bg-white py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6" />
+        </div>
+      </div>
+    </div>
+@else
+    <div class="sm:col-span-3">
+      <label  for="{{ $name }}" 
+              class="inline-flex items-center gap-x-2 font-bold text-lg text-gray-900">
+            <span class="w-2 h-2 bg-green inline-block"></span>  
+            {{ $slot }}
+      </label>
+      <div class="mt-2">
+        <div class="flex items-center rounded-md bg-white pl-3 outline-1 -outline-offset-1 outline-gray-300 focus-within:outline-2 focus-within:-outline-offset-2 focus-within:outline-indigo-600 w-full">
+          <input id="{{ $name }}" type="{{ $type }}" name="{{ $name }}" placeholder="{{ $placeholder }}" class="block min-w-0 grow bg-white py-1.5 pr-3 pl-1 text-base text-gray-900 placeholder:text-gray-400 focus:outline-none sm:text-sm/6" />
+        </div>
+      </div>
+    </div>
+@endif
+
+public function auto_refresh()
+    {
+        $histories = DB::table('histories')
+            ->select('date', 'fuel_resupply', 'fuel_consumption')
+            ->get()
+            ->map(function ($history) {
+                return [
+                    'date' => $history->date,
+                    'stock_additional' => $history->fuel_resupply,
+                    'stock_consumed' => $history->fuel_consumption
+                ];
+            })->toArray();
+
+        DB::table('stocks')->upsert(
+            $histories,
+            ['date'],
+            ['stock_additional', 'stock_consumed']
+        );
+
+        $stocks = DB::table('stocks')
+            ->orderBy('date')
+            ->get()
+            ->values();
+
+        for ($i = 0; $i < count($stocks) - 1; $i++) {
+
+            $current = $stocks[$i];
+            $next = $stocks[$i + 1];
+
+            if ($current->stock_calibration !== null) {
+                $decider = $current->stock_calibration;
+            } elseif ($current->stock_before !== null && $current->stock_consumed !== null) {
+                $decider = $current->stock_before + $current->stock_additional - $current->stock_consumed;
+            } else {
+                continue;
+            }
+
+            DB::table('stocks')
+                ->where('date', $next->date)
+                ->update(['stock_before' => $decider]);
+
+            $stocks[$i + 1]->stock_before = $decider;
+        }
+    }
+
+php artisan tinker
+User::create([
+    'name' => 'Zhafran',
+    'email' => 'zhafran@test.com',
+    'password' => 'zhafran123', // will auto-hash
+]);
+
+$user = App\Models\User::find(1);
+$user->password = bcrypt('newpassword123');
+$user->save();

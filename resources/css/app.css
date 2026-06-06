@@ -1,0 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&display=swap');
+
+@import "tailwindcss";
+
+@source "../../resources/**/*.blade.php";
+@source "../../resources/**/*.js";
+@source "../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php";
+@source "../../storage/framework/views/*.php";
+
+@theme {
+    --color-white: #F9F9F9;
+    --color-black: #060606;
+    --color-green: #00B9AD;
+    --color-red: #FF0000;
+
+    --font-hanken-grotesk: "Hanken Grotesk", sans-serif;
+    --text-2xs: 0.625rem;
+}
